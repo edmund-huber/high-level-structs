@@ -144,7 +144,10 @@ class Struct(object):
         return self._pack()
     
     def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self._pack())
+        kwargs = []
+        for key, value in self._struct_info:
+            kwargs.append('{}={}'.format(key, repr(getattr(self, key)))) #repr(value)))
+        return '{}({})'.format(self.__class__.__name__, ','.join(kwargs))
     
 ###################################################################
 #  End of implementation - usage examples follow:
