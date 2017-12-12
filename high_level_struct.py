@@ -70,7 +70,7 @@ class EmbeddedStructElement(Element):
         return self.struct(s)
 
     def encode(self, format, s):
-        return self.struct._pack(s)
+        return str(s)
 
 name_to_code = {
     'Char'             : 'c',
@@ -135,14 +135,12 @@ class Struct(object):
         for k,v in kwargs.iteritems():
             setattr(self, k, v)
 
-    def _pack(self):
-        return struct.pack(self._format + self._struct_data, 
-            *[elem.encode(self._format, getattr(self, name)) 
-                for (name,elem) in self._struct_info])                
-
     def __str__(self):
-        return self._pack()
-    
+        _format = self._format + self._struct_data
+        value = [elem.encode(self._format, getattr(self, name)) 
+                for (name,elem) in self._struct_info]
+        return struct.pack(_format, *value)
+
     def __repr__(self):
         kwargs = []
         for key, value in self._struct_info:
