@@ -1,3 +1,4 @@
+import struct
 import unittest
 
 from high_level_struct import Format, Struct, Type
@@ -75,6 +76,21 @@ class Point3DTest(StructTest, unittest.TestCase):
     test_class = Point3D
     test_value = Point3D(x=1, y=2, z=3)
     test_value_when_dumped = '\x01\x00\x02\x00\x03\x00'
+
+
+class TestCoercing(unittest.TestCase):
+
+    def test(self):
+        value = Point3D(x=1.5, y=2, z=3)
+        reconstructed = Point3D(str(value))
+        self.assertEqual(reconstructed, Point3D(x=1, y=2, z=3))
+
+
+class TestNones(unittest.TestCase):
+
+    def test(self):
+        with self.assertRaises(struct.error):
+            str(Point3D(x=None, y=2, z=3))
 
 
 if __name__ == '__main__':
