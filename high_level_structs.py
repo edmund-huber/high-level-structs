@@ -1,17 +1,20 @@
 import struct
 
+
 class Format(object):
     """Endianness and size format for structures."""
-    Native          = "@"       # Native format, native size
-    StandardNative  = "="       # Native format, standard size
-    LittleEndian    = "<"       # Standard size
-    BigEndian       = ">"       # Standard size
-    
+    Native = "@"       # Native format, native size
+    StandardNative = "="       # Native format, standard size
+    LittleEndian = "<"       # Standard size
+    BigEndian = ">"       # Standard size
+
+
 class Element(object):
     """A single element in a struct."""
-    id=0
+    id = 0
+
     def __init__(self, typecode):
-        Element.id+=1           # Note: not thread safe
+        Element.id += 1           # Note: not thread safe
         self.id = Element.id
         self.typecode = typecode
         self.size = struct.calcsize(typecode)
@@ -41,6 +44,7 @@ class Element(object):
 
     def __getitem__(self, num): return self(num)
 
+
 class ArrayElement(Element):
     def __init__(self, basic_element, num):
         Element.__init__(self, '%ds' % (len(basic_element) * num))
@@ -48,17 +52,18 @@ class ArrayElement(Element):
         self.basic_element = basic_element
 
     def decode(self, format, s):
-        # NB. We use typecode * size, not %s%s' % (size, typecode), 
-        # so we deal with typecodes that already have numbers,  
+        # NB. We use typecode * size, not %s%s' % (size, typecode),
+        # so we deal with typecodes that already have numbers,
         # ie 2*'4s' != '24s'
-        return [self.basic_element.decode(format, x) for x in  
-                    struct.unpack('%s%s' % (format, 
-                            self.num * self.basic_element.typecode),s)]
+        return [self.basic_element.decode(format, x) for x in
+                struct.unpack('%s%s' % (format,
+                                        self.num * self.basic_element.typecode), s)]
 
     def encode(self, format, vals):
         fmt = format + (self.basic_element.typecode * self.num)
-        return struct.pack(fmt, *[self.basic_element.encode(format,v) 
+        return struct.pack(fmt, *[self.basic_element.encode(format, v)
                                   for v in vals])
+
 
 class EmbeddedStructElement(Element):
     def __init__(self, structure):
@@ -72,24 +77,26 @@ class EmbeddedStructElement(Element):
     def encode(self, format, s):
         return str(s)
 
+
 name_to_code = {
-    'Char'             : 'c',
-    'Byte'             : 'b',
-    'UnsignedByte'     : 'B',
-    'Int'              : 'i',
-    'UnsignedInt'      : 'I',
-    'Short'            : 'h',
-    'UnsignedShort'    : 'H',
-    'Long'             : 'l',
-    'UnsignedLong'     : 'L',
-    'String'           : 's',  
-    'PascalString'     : 'p',  
-    'Pointer'          : 'P',
-    'Float'            : 'f',
-    'Double'           : 'd',
-    'LongLong'         : 'q',
-    'UnsignedLongLong' : 'Q',
-    }
+    'Char': 'c',
+    'Byte': 'b',
+    'UnsignedByte': 'B',
+    'Int': 'i',
+    'UnsignedInt': 'I',
+    'Short': 'h',
+    'UnsignedShort': 'H',
+    'Long': 'l',
+    'UnsignedLong': 'L',
+    'String': 's',
+    'PascalString': 'p',
+    'Pointer': 'P',
+    'Float': 'f',
+    'Double': 'd',
+    'LongLong': 'q',
+    'UnsignedLongLong': 'Q',
+}
+
 
 class Type(object):
     def __getattr__(self, name):
@@ -97,54 +104,58 @@ class Type(object):
 
     def Struct(self, struct):
         return EmbeddedStructElement(struct)
-        
-Type=Type()
+
+
+Type = Type()
+
 
 class MetaStruct(type):
     def __init__(cls, name, bases, d):
         type.__init__(cls, name, bases, d)
         if hasattr(cls, '_struct_data'):  # Allow extending by inheritance
-            cls._struct_info = list(cls._struct_info) # use copy.
+            cls._struct_info = list(cls._struct_info)  # use copy.
         else:
-            cls._struct_data=''
-            cls._struct_info=[]     # name / element pairs
+            cls._struct_data = ''
+            cls._struct_info = []     # name / element pairs
 
         # Get each Element field, sorted by id.
-        elems = sorted(((k,v) for (k,v) in d.iteritems() 
+        elems = sorted(((k, v) for (k, v) in d.iteritems()
                         if isinstance(v, Element)),
-                        key=lambda x:x[1].id)
+                       key=lambda x: x[1].id)
 
-        cls._struct_data += ''.join(str(v) for (k,v) in elems)
+        cls._struct_data += ''.join(str(v) for (k, v) in elems)
         cls._struct_info += elems
         cls._struct_size = struct.calcsize(cls._format + cls._struct_data)
 
+
 class Struct(object):
     """Represent a binary structure."""
-    __metaclass__=MetaStruct
+    __metaclass__ = MetaStruct
     _format = Format.Native  # Default to native format, native size
 
     def __init__(self, _data=None, **kwargs):
         if _data is None:
-            _data ='\0' * self._struct_size
-            
-        fieldvals = zip(self._struct_info, struct.unpack(self._format + 
-                                             self._struct_data, _data))
+            _data = '\0' * self._struct_size
+
+        fieldvals = zip(self._struct_info, struct.unpack(self._format +
+                                                         self._struct_data, _data))
         for (name, elem), val in fieldvals:
             setattr(self, name, elem.decode(self._format, val))
-        
-        for k,v in kwargs.iteritems():
+
+        for k, v in kwargs.iteritems():
             setattr(self, k, v)
 
     def __str__(self):
         _format = self._format + self._struct_data
-        value = [elem.encode(self._format, getattr(self, name)) 
-                for (name,elem) in self._struct_info]
+        value = [elem.encode(self._format, getattr(self, name))
+                 for (name, elem) in self._struct_info]
         return struct.pack(_format, *value)
 
     def __repr__(self):
         kwargs = []
         for key, value in self._struct_info:
-            kwargs.append('{}={}'.format(key, repr(getattr(self, key)))) #repr(value)))
+            # repr(value)))
+            kwargs.append('{}={}'.format(key, repr(getattr(self, key))))
         return '{}({})'.format(self.__class__.__name__, ','.join(kwargs))
 
     def __eq__(self, other):

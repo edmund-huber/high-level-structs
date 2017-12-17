@@ -28,6 +28,7 @@ class PointTest(StructTest, unittest.TestCase):
     test_value = Point(x=1, y=2)
     test_value_when_dumped = '\x01\x00\x02\x00'
 
+
 class Shape(Struct):
     _format = Format.BigEndian
     name = Type.String[8]
@@ -42,7 +43,7 @@ class ShapeTest(StructTest, unittest.TestCase):
         Point(x=5, y=5),
         Point(x=10, y=0),
         Point(x=0, y=0)]
-        )
+    )
     test_value_when_dumped = 'Triangle\x00\x00\x00\x03\x00\x00\x00\x00\x05\x00\x05\x00\n\x00\x00\x00\x00\x00\x00\x00'
 
     # Note that even though Shape is in BigEndian format, the Points keep their
@@ -56,13 +57,16 @@ class ShapeTest(StructTest, unittest.TestCase):
 # unpacked as lists of lists. In addition, it is possible to add methods and
 # non-struct instance variables without interfering with the structure (unless
 # you overwrite structure field names).
+
+
 class TicTacToe(Struct):
     board = Type.Char[3][3]
 
 
 class TicTacToeTest(StructTest, unittest.TestCase):
     test_class = TicTacToe
-    test_value = TicTacToe(board=[['X', '.', 'O'], ['.', 'X', '.'], ['.', '.', 'O']])
+    test_value = TicTacToe(
+        board=[['X', '.', 'O'], ['.', 'X', '.'], ['.', '.', 'O']])
     test_value_when_dumped = 'X.O.X...O'
 
 
