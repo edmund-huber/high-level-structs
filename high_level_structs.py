@@ -2,11 +2,9 @@ import struct
 
 
 class Format(object):
-    """Endianness and size format for structures."""
-    Native = "@"       # Native format, native size
-    StandardNative = "="       # Native format, standard size
-    LittleEndian = "<"       # Standard size
-    BigEndian = ">"       # Standard size
+    Native = "@"
+    LittleEndian = "<"
+    BigEndian = ">"
 
 
 class Element(object):
@@ -131,7 +129,7 @@ class MetaStruct(type):
 class Struct(object):
     """Represent a binary structure."""
     __metaclass__ = MetaStruct
-    _format = Format.Native  # Default to native format, native size
+    _format = Format.LittleEndian
 
     def __init__(self, _data=None, **kwargs):
         if _data is None:
