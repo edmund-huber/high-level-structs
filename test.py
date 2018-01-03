@@ -6,13 +6,17 @@ from high_level_structs import Format, Struct, Type
 
 class StructTest(object):
 
+    # If you pack a Struct, you should be able to unpack it and get the same
+    # value.
     def test_pack_and_dump(self):
         self.assertEqual(self.test_class(
             str(self.test_value)), self.test_value)
 
+    # The repr() output should be eval-able to the same value.
     def test_repr_and_eval(self):
         self.assertEqual(eval(repr(self.test_value)), self.test_value)
 
+    # Check specifically what the dumped string for this Struct is.
     def test_dump(self):
         self.assertEqual(str(self.test_value), self.test_value_when_dumped)
 
@@ -53,12 +57,9 @@ class ShapeTest(StructTest, unittest.TestCase):
     def test_mixed_endianness(self):
         self.assertEqual(str(self.test_value.points[1]), str(Point(x=5, y=5)))
 
+
 # It is also possible to define multi-dimensional arrays, which will be
-# unpacked as lists of lists. In addition, it is possible to add methods and
-# non-struct instance variables without interfering with the structure (unless
-# you overwrite structure field names).
-
-
+# unpacked as lists of lists.
 class TicTacToe(Struct):
     board = Type.Char[3][3]
 
