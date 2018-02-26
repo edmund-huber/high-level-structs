@@ -22,8 +22,8 @@ class StructTest(object):
 
 
 class Point(Struct):
-    x = Type.Short
-    y = Type.Short
+    x = Type.int16
+    y = Type.int16
 
 
 class PointTest(StructTest, unittest.TestCase):
@@ -34,7 +34,7 @@ class PointTest(StructTest, unittest.TestCase):
 
 class Shape(Struct):
     name = Type.String[8]
-    numpoints = Type.Int
+    numpoints = Type.int32
     points = Type.Struct(Point)[4]
 
 
@@ -52,7 +52,7 @@ class ShapeTest(StructTest, unittest.TestCase):
 # It is also possible to define multi-dimensional arrays, which will be
 # unpacked as lists of lists.
 class TicTacToe(Struct):
-    board = Type.Char[3][3]
+    board = Type.char[3][3]
 
 
 class TicTacToeTest(StructTest, unittest.TestCase):
@@ -65,7 +65,7 @@ class TicTacToeTest(StructTest, unittest.TestCase):
 # Structures may also be inherited from, in which case, additional fields will
 # occur after the existing ones.
 class Point3D(Point):
-    z = Type.Short
+    z = Type.int16
 
 
 class Point3DTest(StructTest, unittest.TestCase):

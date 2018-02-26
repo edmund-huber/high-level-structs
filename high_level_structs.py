@@ -71,22 +71,19 @@ class EmbeddedStructElement(Element):
 
 
 name_to_code = {
-    'Char': 'c',
-    'Byte': 'b',
-    'UnsignedByte': 'B',
-    'Int': 'i',
-    'UnsignedInt': 'I',
-    'Short': 'h',
-    'UnsignedShort': 'H',
-    'Long': 'l',
-    'UnsignedLong': 'L',
+    'char': 'c',
+    'int8': 'b',
+    'uint8': 'B',
+    'int16': 'h',
+    'uint16': 'H',
+    'int32': 'i',
+    'uint32': 'I',
+    'int64': 'q',
+    'uint64': 'Q',
     'String': 's',
     'PascalString': 'p',
-    'Pointer': 'P',
-    'Float': 'f',
-    'Double': 'd',
-    'LongLong': 'q',
-    'UnsignedLongLong': 'Q',
+    'float32': 'f',
+    'float64': 'd'
 }
 
 
