@@ -1,14 +1,14 @@
 import struct
 
-FORMAT = '<'
+_FORMAT = '<'
 
-class Element(object):
+class _Element(object):
     """A single element in a struct."""
     id = 0
 
     def __init__(self, typecode):
-        Element.id += 1           # Note: not thread safe
-        self.id = Element.id
+        _Element.id += 1           # Note: not thread safe
+        self.id = _Element.id
         self.typecode = typecode
         self.size = struct.calcsize(typecode)
 
@@ -31,16 +31,16 @@ class Element(object):
         # Special case - strings already handled as one blob.
         if self.typecode in 'sp':
             # Strings handled specially - only one item
-            return Element('%ds' % num)
+            return _Element('%ds' % num)
         else:
-            return ArrayElement(self, num)
+            return _ArrayElement(self, num)
 
     def __getitem__(self, num): return self(num)
 
 
-class ArrayElement(Element):
+class _ArrayElement(_Element):
     def __init__(self, basic_element, num):
-        Element.__init__(self, '%ds' % (len(basic_element) * num))
+        _Element.__init__(self, '%ds' % (len(basic_element) * num))
         self.num = num
         self.basic_element = basic_element
 
@@ -58,9 +58,9 @@ class ArrayElement(Element):
                                   for v in vals])
 
 
-class EmbeddedStructElement(Element):
+class _EmbeddedStructElement(_Element):
     def __init__(self, structure):
-        Element.__init__(self, '%ds' % structure._struct_size)
+        _Element.__init__(self, '%ds' % structure._struct_size)
         self.struct = structure
 
     def decode(self, format, s):
@@ -70,7 +70,7 @@ class EmbeddedStructElement(Element):
         return str(s)
 
 
-name_to_code = {
+_name_to_code = {
     'char': 'c',
     'int8': 'b',
     'uint8': 'B',
@@ -87,18 +87,18 @@ name_to_code = {
 }
 
 
-class Type(object):
+class _Type(object):
     def __getattr__(self, name):
-        return Element(name_to_code[name])
+        return _Element(_name_to_code[name])
 
     def Struct(self, struct):
-        return EmbeddedStructElement(struct)
+        return _EmbeddedStructElement(struct)
 
 
-Type = Type()
+Type = _Type()
 
 
-class MetaStruct(type):
+class _MetaStruct(type):
     def __init__(cls, name, bases, d):
         type.__init__(cls, name, bases, d)
         if hasattr(cls, '_struct_data'):  # Allow extending by inheritance
@@ -107,36 +107,36 @@ class MetaStruct(type):
             cls._struct_data = ''
             cls._struct_info = []     # name / element pairs
 
-        # Get each Element field, sorted by id.
+        # Get each _Element field, sorted by id.
         elems = sorted(((k, v) for (k, v) in d.iteritems()
-                        if isinstance(v, Element)),
+                        if isinstance(v, _Element)),
                        key=lambda x: x[1].id)
 
         cls._struct_data += ''.join(str(v) for (k, v) in elems)
         cls._struct_info += elems
-        cls._struct_size = struct.calcsize(FORMAT + cls._struct_data)
+        cls._struct_size = struct.calcsize(_FORMAT + cls._struct_data)
 
 
 class Struct(object):
     """Represent a binary structure."""
-    __metaclass__ = MetaStruct
+    __metaclass__ = _MetaStruct
 
     def __init__(self, _data=None, **kwargs):
         if _data is None:
             _data = '\0' * self._struct_size
 
-        fieldvals = zip(self._struct_info, struct.unpack(FORMAT +
+        fieldvals = zip(self._struct_info, struct.unpack(_FORMAT +
                                                          self._struct_data, _data))
         for (name, elem), val in fieldvals:
-            setattr(self, name, elem.decode(FORMAT, val))
+            setattr(self, name, elem.decode(_FORMAT, val))
 
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
 
     def __str__(self):
-        value = [elem.encode(FORMAT, getattr(self, name))
+        value = [elem.encode(_FORMAT, getattr(self, name))
                  for (name, elem) in self._struct_info]
-        return struct.pack(FORMAT + self._struct_data, *value)
+        return struct.pack(_FORMAT + self._struct_data, *value)
 
     def __repr__(self):
         kwargs = []

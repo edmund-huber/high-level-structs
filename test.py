@@ -1,7 +1,7 @@
 import struct
 import unittest
 
-from high_level_structs import Struct, Type
+from high_level_structs import *
 
 
 class StructTest(object):
