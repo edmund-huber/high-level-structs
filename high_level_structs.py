@@ -3,8 +3,12 @@ import struct
 _FORMAT = '<'
 
 
-class StructExtraValue(Exception): pass
-class StructMissingValue(Exception): pass
+class StructExtraValue(Exception):
+    pass
+
+
+class StructMissingValue(Exception):
+    pass
 
 
 class _Element(object):
@@ -54,8 +58,10 @@ class _ArrayElement(_Element):
         # so we deal with typecodes that already have numbers,
         # ie 2*'4s' != '24s'
         return [self.basic_element.decode(format, x) for x in
-                struct.unpack('%s%s' % (format,
-                                        self.num * self.basic_element.typecode), s)]
+                struct.unpack('%s%s' % (
+                    format,
+                    self.num * self.basic_element.typecode
+                ), s)]
 
     def encode(self, format, vals):
         fmt = format + (self.basic_element.typecode * self.num)
@@ -131,18 +137,20 @@ class Struct(object):
             # If this Struct is not being initialized based on a prepacked
             # buffer, check that all the initializers (according to this
             # Struct's definition) are present.
-            values_from_definition = [identifier for identifier, _ in self._struct_info]
-            if set(kwargs) < set(values_from_definition):
-                missing_values = filter(lambda v: v not in kwargs, values_from_definition)
+            values_from_def = [name for name, _ in self._struct_info]
+            if set(kwargs) < set(values_from_def):
+                missing_values = [
+                    x for x in values_from_def if x not in kwargs]
                 raise StructMissingValue(', '.join(missing_values))
-            elif set(kwargs) > set(values_from_definition):
-                extra_values = filter(lambda v: v not in values_from_definition, kwargs)
+            elif set(kwargs) > set(values_from_def):
+                extra_values = [
+                    x for x in kwargs if x not in values_from_def]
                 raise StructExtraValue(', '.join(extra_values))
 
             _data = '\0' * self._struct_size
 
-        fieldvals = zip(self._struct_info, struct.unpack(_FORMAT +
-                                                         self._struct_data, _data))
+        fieldvals = zip(self._struct_info, struct.unpack(
+            _FORMAT + self._struct_data, _data))
         for (name, elem), val in fieldvals:
             setattr(self, name, elem.decode(_FORMAT, val))
 
