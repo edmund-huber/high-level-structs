@@ -2,6 +2,11 @@ import struct
 
 _FORMAT = '<'
 
+
+class StructExtraValue(Exception): pass
+class StructMissingValue(Exception): pass
+
+
 class _Element(object):
     """A single element in a struct."""
     id = 0
@@ -123,6 +128,17 @@ class Struct(object):
 
     def __init__(self, _data=None, **kwargs):
         if _data is None:
+            # If this Struct is not being initialized based on a prepacked
+            # buffer, check that all the initializers (according to this
+            # Struct's definition) are present.
+            values_from_definition = [identifier for identifier, _ in self._struct_info]
+            if set(kwargs) < set(values_from_definition):
+                missing_values = filter(lambda v: v not in kwargs, values_from_definition)
+                raise StructMissingValue(', '.join(missing_values))
+            elif set(kwargs) > set(values_from_definition):
+                extra_values = filter(lambda v: v not in values_from_definition, kwargs)
+                raise StructExtraValue(', '.join(extra_values))
+
             _data = '\0' * self._struct_size
 
         fieldvals = zip(self._struct_info, struct.unpack(_FORMAT +

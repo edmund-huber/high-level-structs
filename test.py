@@ -9,7 +9,10 @@ class StructTest(object):
     # If you pack a Struct, you should be able to unpack it and get the same
     # value.
     def test_pack_and_dump(self):
-        self.assertEqual(self.test_class(
+        # For some reason, if I just have 'test_class = Class' in the test
+        # definition, unittest tries to call Class(), (and it shouldn't).
+        test_class = globals()[self.test_class]
+        self.assertEqual(test_class(
             str(self.test_value)), self.test_value)
 
     # The repr() output should be eval-able to the same value.
@@ -27,7 +30,7 @@ class Point(Struct):
 
 
 class PointTest(StructTest, unittest.TestCase):
-    test_class = Point
+    test_class = 'Point'
     test_value = Point(x=1, y=2)
     test_value_when_dumped = '\x01\x00\x02\x00'
 
@@ -39,7 +42,7 @@ class Shape(Struct):
 
 
 class ShapeTest(StructTest, unittest.TestCase):
-    test_class = Shape
+    test_class = 'Shape'
     test_value = Shape(name='Triangle', numpoints=3, points=[
         Point(x=0, y=0),
         Point(x=5, y=5),
@@ -56,7 +59,7 @@ class TicTacToe(Struct):
 
 
 class TicTacToeTest(StructTest, unittest.TestCase):
-    test_class = TicTacToe
+    test_class = 'TicTacToe'
     test_value = TicTacToe(
         board=[['X', '.', 'O'], ['.', 'X', '.'], ['.', '.', 'O']])
     test_value_when_dumped = 'X.O.X...O'
@@ -69,7 +72,7 @@ class Point3D(Point):
 
 
 class Point3DTest(StructTest, unittest.TestCase):
-    test_class = Point3D
+    test_class = 'Point3D'
     test_value = Point3D(x=1, y=2, z=3)
     test_value_when_dumped = '\x01\x00\x02\x00\x03\x00'
 
@@ -82,11 +85,28 @@ class TestCoercing(unittest.TestCase):
         self.assertEqual(reconstructed, Point3D(x=1, y=2, z=3))
 
 
-class TestNones(unittest.TestCase):
+class TestErroneousInitializion(unittest.TestCase):
 
-    def test(self):
+    def test_none(self):
         with self.assertRaises(struct.error):
             str(Point3D(x=None, y=2, z=3))
+
+    def test_extra_initializer(self):
+        with self.assertRaises(StructExtraValue):
+            Point3D(x=1, y=2, z=3, aaaaa=4)
+
+    def test_missing_initializer(self):
+        with self.assertRaises(StructMissingValue):
+            Point3D(x=1, y=2)
+
+    def test_missing_embedded_initializer(self):
+        with self.assertRaises(StructMissingValue):
+            Shape(name='Triangle', numpoints=3, points=[
+                Point(x=0, y=0),
+                Point(x=5, y=5),
+                Point(x=10, y=0),
+                Point(x=0)]
+            )
 
 
 if __name__ == '__main__':
