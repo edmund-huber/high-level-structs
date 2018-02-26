@@ -1,11 +1,6 @@
 import struct
 
-
-class Format(object):
-    Native = "@"
-    LittleEndian = "<"
-    BigEndian = ">"
-
+FORMAT = '<'
 
 class Element(object):
     """A single element in a struct."""
@@ -68,7 +63,6 @@ class EmbeddedStructElement(Element):
         Element.__init__(self, '%ds' % structure._struct_size)
         self.struct = structure
 
-    # Note: Structs use their own endianness format, not their parent's
     def decode(self, format, s):
         return self.struct(s)
 
@@ -123,31 +117,29 @@ class MetaStruct(type):
 
         cls._struct_data += ''.join(str(v) for (k, v) in elems)
         cls._struct_info += elems
-        cls._struct_size = struct.calcsize(cls._format + cls._struct_data)
+        cls._struct_size = struct.calcsize(FORMAT + cls._struct_data)
 
 
 class Struct(object):
     """Represent a binary structure."""
     __metaclass__ = MetaStruct
-    _format = Format.LittleEndian
 
     def __init__(self, _data=None, **kwargs):
         if _data is None:
             _data = '\0' * self._struct_size
 
-        fieldvals = zip(self._struct_info, struct.unpack(self._format +
+        fieldvals = zip(self._struct_info, struct.unpack(FORMAT +
                                                          self._struct_data, _data))
         for (name, elem), val in fieldvals:
-            setattr(self, name, elem.decode(self._format, val))
+            setattr(self, name, elem.decode(FORMAT, val))
 
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
 
     def __str__(self):
-        _format = self._format + self._struct_data
-        value = [elem.encode(self._format, getattr(self, name))
+        value = [elem.encode(FORMAT, getattr(self, name))
                  for (name, elem) in self._struct_info]
-        return struct.pack(_format, *value)
+        return struct.pack(FORMAT + self._struct_data, *value)
 
     def __repr__(self):
         kwargs = []

@@ -1,7 +1,7 @@
 import struct
 import unittest
 
-from high_level_structs import Format, Struct, Type
+from high_level_structs import Struct, Type
 
 
 class StructTest(object):
@@ -22,7 +22,6 @@ class StructTest(object):
 
 
 class Point(Struct):
-    _format = Format.LittleEndian
     x = Type.Short
     y = Type.Short
 
@@ -34,7 +33,6 @@ class PointTest(StructTest, unittest.TestCase):
 
 
 class Shape(Struct):
-    _format = Format.BigEndian
     name = Type.String[8]
     numpoints = Type.Int
     points = Type.Struct(Point)[4]
@@ -48,14 +46,7 @@ class ShapeTest(StructTest, unittest.TestCase):
         Point(x=10, y=0),
         Point(x=0, y=0)]
     )
-    test_value_when_dumped = 'Triangle\x00\x00\x00\x03\x00\x00\x00\x00\x05\x00\x05\x00\n\x00\x00\x00\x00\x00\x00\x00'
-
-    # Note that even though Shape is in BigEndian format, the Points keep their
-    # LittleEndian setting, so mixing formats is possible, and the same struct
-    # will always have the same representation regardless of its context.
-    # Hence the following is true:
-    def test_mixed_endianness(self):
-        self.assertEqual(str(self.test_value.points[1]), str(Point(x=5, y=5)))
+    test_value_when_dumped = 'Triangle\x03\x00\x00\x00\x00\x00\x00\x00\x05\x00\x05\x00\n\x00\x00\x00\x00\x00\x00\x00'
 
 
 # It is also possible to define multi-dimensional arrays, which will be
